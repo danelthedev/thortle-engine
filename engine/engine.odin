@@ -2,9 +2,14 @@ package engine
 
 import "core:c"
 import "core:fmt"
+import "core:os"
+import "core:strings"
 
 import gl "vendor:OpenGL"
 import "vendor:glfw"
+
+// import the renderer package
+import "../renderer"
 
 GL_MAJOR_VERSION : c.int : 4
 GL_MINOR_VERSION :: 6
@@ -20,7 +25,7 @@ WindowSettings :: struct {
 // Initialization of the engine //
 //////////////////////////////////
 
-init :: proc(window_settings: WindowSettings) -> (window_ptr: glfw.WindowHandle, error: bool){
+init :: proc(window_settings: WindowSettings) -> (window_ptr: glfw.WindowHandle, error: bool) {
     // Initialize glfw
 	// GLFW_TRUE if successful, or GLFW_FALSE if an error occurred
 	if !glfw.Init(){
@@ -79,9 +84,14 @@ size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 // Running the engine //
 ////////////////////////
 
+shader_program, vao : u32
+
 run :: proc(window: glfw.WindowHandle) {
 	defer glfw.Terminate()
 	defer glfw.DestroyWindow(window)
+
+	shader_program = renderer.init_shaders()
+	vao = renderer.init_buffers()
 
 	// Main loop
 	for !glfw.WindowShouldClose(window) && running {
@@ -96,18 +106,19 @@ run :: proc(window: glfw.WindowHandle) {
 	exit()
 }
 
-update :: proc(){
+update :: proc() {
 	// Own update code here
 }
 
-draw :: proc(){
+draw :: proc() {
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	// Clear the screen with the set clearcolor
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	// Own drawing code here
+	renderer.render_frame(shader_program, vao)
 }
 
-exit :: proc(){
+exit :: proc() {
 	// Own termination code here
 }
