@@ -63,6 +63,11 @@ init :: proc(window_settings: WindowSettings) -> (window_ptr: glfw.WindowHandle,
 
 	gl.load_up_to(int(GL_MAJOR_VERSION), GL_MINOR_VERSION, glfw.gl_set_proc_address)
 
+	// enable transparency
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+
     return window, false
 }
 
@@ -84,15 +89,15 @@ size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 // Running the engine //
 ////////////////////////
 
-shader_program, vao : u32
+renderables: [dynamic]renderer.Renderable
+shader_program: u32
 
 run :: proc(window: glfw.WindowHandle) {
 	defer glfw.Terminate()
 	defer glfw.DestroyWindow(window)
 
-	shader_program = renderer.init_shaders()
-	vao = renderer.init_buffers()
-
+	renderables = renderer.init_buffers()
+	
 	// Main loop
 	for !glfw.WindowShouldClose(window) && running {
 		glfw.PollEvents()
@@ -116,7 +121,7 @@ draw :: proc() {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	// Own drawing code here
-	renderer.render_frame(shader_program, vao)
+	renderer.render_frame(renderables)
 }
 
 exit :: proc() {

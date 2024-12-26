@@ -4,129 +4,84 @@ import "core:c"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "core:math"
 
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
-init_shaders :: proc() -> u32 {
-    // vertex shader
-    vert_shader_bytes, ok_vert := os.read_entire_file("shaders/vertex.vert", context.allocator)
-	if !ok_vert {
-		// could not read file
-        fmt.println("error reading file")
-		return 1
-	}
-	defer delete(vert_shader_bytes)
+import "shaders"
 
-    // fmt.println("vert_shader_bytes:\n", string(vert_shader_bytes[:]))
+init_buffers :: proc() -> [dynamic]Renderable{
+    shader_program := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment.frag")
+	
+    renderables: [dynamic]Renderable
+
+    mesh1 := Mesh{
+        vertices=[]Vertex{
+            {
+                position = {0.5, 0.5, 0.0},
+                color = {1.0, 0.0, 0.0}
+            },
+            {
+                position = {0.5, -0.5, 0.0},
+                color = {0.0, 1.0, 0.0}
+            },
+            {
+                position = {-0.5, -0.5, 0.0},
+                color = {0.0, 0.0, 1.0}
+            },
+            {
+                position = {-0.5, 0.5, 0.0},
+                color = {1.0, 1.0, 0.0}
+            }
+        }, 
+        indices = []u32{
+            0, 1, 3,
+            1, 2, 3
+        },
+
+        render_mode = gl.LINE
+    }
     
-    vert_shader_code := strings.clone_to_cstring(string(vert_shader_bytes[:]))
+    append(&renderables, create_renderable(mesh1, shader_program))
 
-    vertex_shader: u32;
-    vertex_shader = gl.CreateShader(gl.VERTEX_SHADER);
-    
-    gl.ShaderSource(vertex_shader, 1, &vert_shader_code, nil);
-    gl.CompileShader(vertex_shader);
+    mesh2 := Mesh{
+        vertices = []Vertex{
+            {
+                position = {0.25, 0.25, 0.0},
+                color = {0.0, 1.0, 0.0}
+            },
+            {
+                position = {0.25, -0.25, 0.0},
+                color = {1.0, 1.0, 0.0}
+            },
+            {
+                position = {-0.25, -0.25, 0.0},
+                color = {0.0, 1.0, 1.0}
+            },
+            {
+                position = {-0.25, 0.25, 0.0},
+                color = {1.0, 1.0, 0.0}
+            }
+        }, 
+        indices = []u32{
+            0, 1, 3,
+            1, 2, 3
+        },
 
-    // check for shader compile errors
-    success: i32;
-    info_log: [512]u8
-    
-    gl.GetShaderiv(vertex_shader, gl.COMPILE_STATUS, &success);
-    if success == 0 {
-        gl.GetShaderInfoLog(vertex_shader, 512, nil, raw_data(info_log[:]))
-
-        fmt.println("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n", string(info_log[:]));
+        render_mode = gl.FILL
     }
 
-    // fragment shader
-    frag_shader_bytes, ok_frag := os.read_entire_file("shaders/fragment.frag", context.allocator)
-	if !ok_frag {
-		// could not read file
-        fmt.println("error reading file")
-		return 1
-	}
-	defer delete(frag_shader_bytes)
-    
-    // fmt.println("frag_shader_bytes:\n", string(frag_shader_bytes[:]))
+    append(&renderables, create_renderable(mesh2, shader_program))
 
-    frag_shader_code := strings.clone_to_cstring(string(frag_shader_bytes[:]))
-    
-    fragment_shader: u32;
-    fragment_shader = gl.CreateShader(gl.FRAGMENT_SHADER);
-    
-    gl.ShaderSource(fragment_shader, 1, &frag_shader_code, nil);
-    gl.CompileShader(fragment_shader);
-    
-    // check for shader compile errors
-    gl.GetShaderiv(fragment_shader, gl.COMPILE_STATUS, &success);
-    if success == 0 {
-        gl.GetShaderInfoLog(fragment_shader, 512, nil, raw_data(info_log[:]))
-
-        fmt.println("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n", string(info_log[:]));
-    }
-
-    // link shaders
-    shader_program: u32;
-    shader_program = gl.CreateProgram();
-    gl.AttachShader(shader_program, vertex_shader);
-    gl.AttachShader(shader_program, fragment_shader);
-    gl.LinkProgram(shader_program);
-
-    // check for linking errors
-    gl.GetProgramiv(shader_program, gl.LINK_STATUS, &success);
-    if success == 0 {
-        gl.GetProgramInfoLog(shader_program, 512, nil, raw_data(info_log[:]))
-
-        fmt.println("ERROR::SHADER::PROGRAM::LINKING_FAILED\n", string(info_log[:]));
-    }
-
-    gl.DeleteShader(vertex_shader);
-    gl.DeleteShader(fragment_shader);
-
-    return shader_program
+    return renderables
 }
 
-init_buffers :: proc() -> u32{
-    vertices := []f32{
-         0.5,  0.5, 0.0, // top right
-         0.5, -0.5, 0.0, // bottom right
-        -0.5, -0.5, 0.0, // bottom left
-        -0.5,  0.5, 0.0  // top left 
-    }
-
-    indices := []u32{
-        0, 1, 3,
-        1, 2, 3
-    }
-
-    VAO, VBO, EBO: u32
-
-    // init vertex array object
-    gl.GenVertexArrays(1, &VAO)
-    gl.GenBuffers(1, &VBO)
-    gl.GenBuffers(1, &EBO)
-
-    gl.BindVertexArray(VAO)
-
-    gl.BindBuffer(gl.ARRAY_BUFFER, VBO)
-    gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(vertices[0]), raw_data(vertices), gl.STATIC_DRAW)
-
-    gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-    gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices) * size_of(indices[0]), raw_data(indices), gl.STATIC_DRAW)
-
-    gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3 * size_of(f32), uintptr(0))
-    gl.EnableVertexAttribArray(0)
-
-    gl.BindBuffer(gl.ARRAY_BUFFER, 0); 
+render_frame :: proc(renderables: [dynamic]Renderable) {
     
-    gl.BindVertexArray(0); 
+    for renderable in renderables {
+        bind_renderable(renderable)
+        gl.DrawElements(gl.TRIANGLES, auto_cast len(renderable.mesh.indices), gl.UNSIGNED_INT, nil)
+    }
 
-    return VAO
-}
-
-render_frame :: proc(shader_program: u32, VAO: u32) {
-    gl.UseProgram(shader_program)
-    gl.BindVertexArray(VAO)
-    gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 }
