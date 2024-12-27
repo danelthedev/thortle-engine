@@ -4,6 +4,7 @@ import "core:c"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import glm "core:math/linalg/glsl"
 
 import gl "vendor:OpenGL"
 
@@ -102,6 +103,10 @@ add_uniform :: proc(shader_program: u32, name: string, value: $T) {
         case typeid_of([4]f32): {
             v := (cast(^[4]f32)(&value))^
             gl.Uniform4f(location, v.x, v.y, v.z, v.w)
+        }
+        case typeid_of(glm.mat4): {
+            v := (cast(^glm.mat4)(&value))^
+            gl.UniformMatrix4fv(location, 1, false, &v[0][0])
         }
         case: {
             fmt.println("Unsupported uniform type: ", uniform_type)

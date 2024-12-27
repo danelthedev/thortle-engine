@@ -3,6 +3,7 @@ package renderer
 import "core:fmt"
 import "core:strings"
 import "core:strconv"
+import glm "core:math/linalg/glsl"
 
 import gl "vendor:OpenGL"
 
@@ -32,12 +33,20 @@ Renderable :: struct {
     vao: u32,
     vbo: u32,
     ebo: u32,
+
+    transform: Transform3D
 }        
 
 create_renderable :: proc(mesh: Mesh, shader_program: u32, texs: []textures.Texture = nil) -> Renderable {
     renderable := Renderable{
         mesh = mesh,
         shader_program = shader_program,
+        transform = Transform3D{
+            position = {0.0, 0.0, 0.0},
+            scale = {1.0, 1.0, 1.0},
+            rotation = {0.0, 0.0, 0.0},
+            transform_matrix = glm.mat4(1.0)
+        }
     }
 
     gl.GenVertexArrays(1, &renderable.vao)
@@ -72,6 +81,9 @@ create_renderable :: proc(mesh: Mesh, shader_program: u32, texs: []textures.Text
             add_texture_to_renderable(&renderable, texture)
         }
     }
+
+    // set the transform
+    shaders.add_uniform(shader_program, "transform", renderable.transform.transform_matrix)
     
     return renderable
 }
@@ -97,4 +109,25 @@ add_texture_to_renderable :: proc(renderable: ^Renderable, texture: textures.Tex
     vLenStr := strconv.itoa(buf[:], vLen)
     
     shaders.add_uniform(renderable.shader_program, strings.concatenate({"vTexture", vLenStr}), cast(i32) renderable.textures[len(renderable.textures)-1].id)
+}
+
+set_renderable_rotation :: proc(renderable: ^Renderable, rotation: [3]f32) {
+    gl.UseProgram(renderable.shader_program)
+    renderable.transform.rotation = rotation
+    calculate_transform_matrix(&renderable.transform)
+    shaders.add_uniform(renderable.shader_program, "transform", renderable.transform.transform_matrix)
+}
+
+set_renderable_position :: proc(renderable: ^Renderable, position: [3]f32) {
+    gl.UseProgram(renderable.shader_program)
+    renderable.transform.position = position
+    calculate_transform_matrix(&renderable.transform)
+    shaders.add_uniform(renderable.shader_program, "transform", renderable.transform.transform_matrix)
+}
+
+set_renderable_scale :: proc(renderable: ^Renderable, scale: [3]f32) {
+    gl.UseProgram(renderable.shader_program)
+    renderable.transform.scale = scale
+    calculate_transform_matrix(&renderable.transform)
+    shaders.add_uniform(renderable.shader_program, "transform", renderable.transform.transform_matrix)
 }

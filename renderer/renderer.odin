@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:math"
+import glm "core:math/linalg/glsl"
 
 import gl "vendor:OpenGL"
 import "vendor:glfw"
@@ -12,14 +13,14 @@ import "vendor:glfw"
 import "shaders"
 import "textures"
 
+// TODO: cleanup the transform code to be consistent
+
 init_buffers :: proc() -> [dynamic]Renderable{
     using textures
-
-    shader_program := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment.frag")
-    shader_program2 := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment2.frag")
-	
     renderables: [dynamic]Renderable
 
+    shader_program := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment.frag")
+	
     mesh1 := Mesh{
         vertices=[]Vertex{
             {
@@ -60,7 +61,13 @@ init_buffers :: proc() -> [dynamic]Renderable{
         create_texture_from_image("resources/awesomeface.png")
     })
     
+    set_renderable_rotation(&renderable1, {0.0, 0.0, -math.PI / 3.0})
+    set_renderable_position(&renderable1, {0.25, 0.0, 0.0})
+    set_renderable_scale(&renderable1, {0.25, 0.5, 1.0})
+
     append(&renderables, renderable1)
+
+    shader_program2 := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment2.frag")
 
     mesh2 := Mesh{
         vertices = []Vertex{
