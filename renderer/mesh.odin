@@ -1,6 +1,12 @@
 package renderer
 
+import "core:fmt"
+import "core:strings"
+import "core:strconv"
+
 import gl "vendor:OpenGL"
+
+import "shaders"
 
 Vertex :: struct {
     position: [3]f32,
@@ -18,6 +24,7 @@ Mesh :: struct {
 Renderable :: struct {
     mesh: Mesh,
     shader_program: u32,
+    textures: [dynamic]Texture,
 
     vao: u32,
     vbo: u32,
@@ -56,12 +63,18 @@ create_renderable :: proc(mesh: Mesh, shader_program: u32) -> Renderable {
 
     gl.BindBuffer(gl.ARRAY_BUFFER, 0)
     gl.BindVertexArray(0)
-
+    
     return renderable
 }
 
 bind_renderable :: proc(renderable: Renderable) {
     gl.PolygonMode(gl.FRONT_AND_BACK, auto_cast renderable.mesh.render_mode)
     gl.UseProgram(renderable.shader_program)
+    if len(renderable.textures) != 0 {
+        for texture in renderable.textures {
+            gl.ActiveTexture(gl.TEXTURE0 + texture.id)
+            gl.BindTexture(gl.TEXTURE_2D, texture.id)
+        }
+    }
     gl.BindVertexArray(renderable.vao)
 }
