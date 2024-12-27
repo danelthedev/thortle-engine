@@ -10,8 +10,11 @@ import gl "vendor:OpenGL"
 import "vendor:glfw"
 
 import "shaders"
+import "textures"
 
 init_buffers :: proc() -> [dynamic]Renderable{
+    using textures
+
     shader_program := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment.frag")
     shader_program2 := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment2.frag")
 	
@@ -52,14 +55,10 @@ init_buffers :: proc() -> [dynamic]Renderable{
         render_mode = gl.FILL
     }
 
-    renderable1 := create_renderable(mesh1, shader_program)
-    
-    // TODO: Find more elegant way to append textures
-
-    append(&renderable1.textures, create_texture_from_image("resources/wall.jpg"))
-    append(&renderable1.textures, create_texture_from_image("resources/awesomeface.png"))
-    shaders.add_uniform(renderable1.shader_program, "vTexture", cast(i32) renderable1.textures[0].id)
-    shaders.add_uniform(renderable1.shader_program, "vTexture2", cast(i32) renderable1.textures[1].id)
+    renderable1 := create_renderable(mesh1, shader_program, {
+        create_texture_from_image("resources/wall.jpg"),
+        create_texture_from_image("resources/awesomeface.png")
+    })
     
     append(&renderables, renderable1)
 
@@ -98,11 +97,10 @@ init_buffers :: proc() -> [dynamic]Renderable{
         render_mode = gl.FILL
     }
 
-    renderable2 := create_renderable(mesh2, shader_program2)
-    append(&renderable2.textures, create_texture_from_image("resources/wall.jpg"))
-    append(&renderable2.textures, create_texture_from_image("resources/awesomeface.png"))
-    shaders.add_uniform(renderable2.shader_program, "vTexture", cast(i32) renderable2.textures[0].id)
-    shaders.add_uniform(renderable2.shader_program, "vTexture2", cast(i32) renderable2.textures[1].id)
+    renderable2 := create_renderable(mesh2, shader_program2, {
+        create_texture_from_image("resources/wall.jpg"),
+        create_texture_from_image("resources/awesomeface.png")
+    })
 
     append(&renderables, renderable2)
 

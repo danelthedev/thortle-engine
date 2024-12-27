@@ -7,6 +7,7 @@ import "core:strconv"
 import gl "vendor:OpenGL"
 
 import "shaders"
+import "textures"
 
 Vertex :: struct {
     position: [3]f32,
@@ -14,6 +15,8 @@ Vertex :: struct {
     tex_coords: [2]f32,
     normal: [3]f32
 }
+
+
 
 Mesh :: struct {
     vertices: []Vertex,
@@ -24,14 +27,14 @@ Mesh :: struct {
 Renderable :: struct {
     mesh: Mesh,
     shader_program: u32,
-    textures: [dynamic]Texture,
+    textures: [dynamic]textures.Texture,
 
     vao: u32,
     vbo: u32,
     ebo: u32,
 }        
 
-create_renderable :: proc(mesh: Mesh, shader_program: u32) -> Renderable {
+create_renderable :: proc(mesh: Mesh, shader_program: u32, texs: []textures.Texture = nil) -> Renderable {
     renderable := Renderable{
         mesh = mesh,
         shader_program = shader_program,
@@ -63,11 +66,18 @@ create_renderable :: proc(mesh: Mesh, shader_program: u32) -> Renderable {
 
     gl.BindBuffer(gl.ARRAY_BUFFER, 0)
     gl.BindVertexArray(0)
+
+    if texs != nil {
+        for texture in texs {
+            add_texture_to_renderable(&renderable, texture)
+        }
+    }
     
     return renderable
 }
 
 bind_renderable :: proc(renderable: Renderable) {
+
     gl.PolygonMode(gl.FRONT_AND_BACK, auto_cast renderable.mesh.render_mode)
     gl.UseProgram(renderable.shader_program)
     if len(renderable.textures) != 0 {
@@ -77,4 +87,14 @@ bind_renderable :: proc(renderable: Renderable) {
         }
     }
     gl.BindVertexArray(renderable.vao)
+}
+
+add_texture_to_renderable :: proc(renderable: ^Renderable, texture: textures.Texture, name: string = "vTexture") {
+    append(&renderable.textures, texture)
+
+    vLen := len(renderable.textures)
+    buf: [4]byte
+    vLenStr := strconv.itoa(buf[:], vLen)
+    
+    shaders.add_uniform(renderable.shader_program, strings.concatenate({"vTexture", vLenStr}), cast(i32) renderable.textures[len(renderable.textures)-1].id)
 }
