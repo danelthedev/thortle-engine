@@ -13,10 +13,17 @@ import "vendor:glfw"
 import "shaders"
 import "textures"
 
-// TODO: cleanup the transform code to be consistent
+editor_camera : Camera
 
 init_buffers :: proc() -> [dynamic]Renderable{
     using textures
+
+    editor_camera = create_camera(Transform3D{
+        translation = {0.5, 0.0, 0.1},
+        rotation = {0.0, -0.7, 0.0},
+        scaling = {1.0, 1.0, 1.0}
+    })
+
     renderables: [dynamic]Renderable
 
     shader_program := shaders.create_shader_program("shaders/vertex.vert", "shaders/fragment.frag")
@@ -24,25 +31,25 @@ init_buffers :: proc() -> [dynamic]Renderable{
     mesh1 := Mesh{
         vertices=[]Vertex{
             {
-                position = {0.5, 0.5, 0.0},
+                translation = {0.5, 0.5, 0.0},
                 color = {1.0, 0.0, 0.0},
                 tex_coords = {1.0, 1.0},
                 normal = {0.0, 0.0, 1.0}
             },
             {
-                position = {0.5, -0.5, 0.0},
+                translation = {0.5, -0.5, 0.0},
                 color = {0.0, 1.0, 0.0},
                 tex_coords = {1.0, 0.0},
                 normal = {0.0, 0.0, 1.0}
             },
             {
-                position = {-0.5, -0.5, 0.0},
+                translation = {-0.5, -0.5, 0.0},
                 color = {0.0, 0.0, 1.0},
                 tex_coords = {0.0, 0.0},
                 normal = {0.0, 0.0, 1.0}
             },
             {
-                position = {-0.5, 0.5, 0.0},
+                translation = {-0.5, 0.5, 0.0},
                 color = {1.0, 1.0, 0.0},
                 tex_coords = {0.0, 1.0},
                 normal = {0.0, 0.0, 1.0}
@@ -60,10 +67,13 @@ init_buffers :: proc() -> [dynamic]Renderable{
         create_texture_from_image("resources/wall.jpg"),
         create_texture_from_image("resources/awesomeface.png")
     })
-    
-    set_renderable_rotation(&renderable1, {0.0, 0.0, -math.PI / 3.0})
-    set_renderable_position(&renderable1, {0.25, 0.0, 0.0})
-    set_renderable_scale(&renderable1, {0.25, 0.5, 1.0})
+
+    set_renderable_transform(&renderable1, Transform3D{
+        translation = {0.25, 0.0, -0.1},
+        scaling = {0.25, 0.5, 1.0},
+        rotation = {0.0, 0.0, -math.PI / 3.0},
+        transform_matrix = glm.mat4(1.0)
+    }) 
 
     append(&renderables, renderable1)
 
@@ -72,25 +82,25 @@ init_buffers :: proc() -> [dynamic]Renderable{
     mesh2 := Mesh{
         vertices = []Vertex{
             {
-                position = {0.25, 0.25, 0.0},
+                translation = {0.25, 0.25, 0.0},
                 color = {0.0, 1.0, 0.0},
                 tex_coords = {1.0, 1.0},
                 normal = {0.0, 0.0, 1.0}
             },
             {
-                position = {0.25, -0.25, 0.0},
+                translation = {0.25, -0.25, 0.0},
                 color = {1.0, 1.0, 0.0},
                 tex_coords = {1.0, 0.0},
                 normal = {0.0, 0.0, 1.0}
             },
             {
-                position = {-0.25, -0.25, 0.0},
+                translation = {-0.25, -0.25, 0.0},
                 color = {0.0, 1.0, 1.0},
                 tex_coords = {0.0, 0.0},
                 normal = {0.0, 0.0, 1.0}
             },
             {
-                position = {-0.25, 0.25, 0.0},
+                translation = {-0.25, 0.25, 0.0},
                 color = {1.0, 1.0, 0.0},
                 tex_coords = {0.0, 1.0},
                 normal = {0.0, 0.0, 1.0}
@@ -115,9 +125,9 @@ init_buffers :: proc() -> [dynamic]Renderable{
 }
 
 render_frame :: proc(renderables: [dynamic]Renderable) {
-    
+
     for renderable in renderables {
-        bind_renderable(renderable)
+        bind_renderable(renderable, &editor_camera)
         gl.DrawElements(gl.TRIANGLES, auto_cast len(renderable.mesh.indices), gl.UNSIGNED_INT, nil)
     }
 

@@ -67,6 +67,9 @@ init :: proc(window_settings: WindowSettings) -> (window_ptr: glfw.WindowHandle,
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
+	// enable depth testing
+	gl.Enable(gl.DEPTH_TEST);  
+
 
     return window, false
 }
@@ -118,7 +121,7 @@ update :: proc() {
 draw :: proc() {
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	// Clear the screen with the set clearcolor
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// Own drawing code here
 	renderer.render_frame(renderables)

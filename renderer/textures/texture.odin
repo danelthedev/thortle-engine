@@ -10,6 +10,7 @@ import stbi "vendor:stb/image"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
+
 Texture :: struct {
     id: u32,
     width: i32,
@@ -34,7 +35,7 @@ create_texture_from_image :: proc(image_path: string) -> Texture {
     stbi.set_flip_vertically_on_load(1);
     data := stbi.load(strings.clone_to_cstring(image_path), &texture.width, &texture.height, &texture.nr_channels, 0)
 
-    fmt.println("width: ", texture.width, " height: ", texture.height, " nr_channels: ", texture.nr_channels, " data: ", data)
+    // fmt.println("width: ", texture.width, " height: ", texture.height, " nr_channels: ", texture.nr_channels, " data: ", data)
 
     if data == nil {
         fmt.println("Failed to load texture")
