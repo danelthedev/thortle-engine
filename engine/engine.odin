@@ -121,6 +121,7 @@ update :: proc() {
 draw :: proc() {
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	// Clear the screen with the set clearcolor
+	// gl.Clear(gl.COLOR_BUFFER_BIT)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// Own drawing code here

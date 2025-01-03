@@ -48,6 +48,8 @@ create_renderable :: proc(mesh: Mesh, shader_program: u32, texs: []textures.Text
         }
     }
 
+    // fmt.println("Vertex count: ", len(mesh.vertices))
+
     gl.GenVertexArrays(1, &renderable.vao)
     gl.GenBuffers(1, &renderable.vbo)
     gl.GenBuffers(1, &renderable.ebo)

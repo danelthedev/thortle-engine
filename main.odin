@@ -16,8 +16,8 @@ import "engine"
 main :: proc() {	
 
 	window, err := engine.init(engine.WindowSettings{
-		width = 1000,
-		height = 1000,
+		width = 1280,
+		height = 720,
 		title = "Thortle engine",
 	})
 
